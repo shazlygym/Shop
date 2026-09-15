@@ -17,6 +17,11 @@ describe('isCodOrder', () => {
     expect(isCodOrder(['paypal'])).toBe(false)
   })
 
+  it('rejects gateway names that merely contain cod as a substring', () => {
+    expect(isCodOrder(['barcode'])).toBe(false)
+    expect(isCodOrder(['promo_code'])).toBe(false)
+  })
+
   it('returns false for an empty list', () => {
     expect(isCodOrder([])).toBe(false)
   })

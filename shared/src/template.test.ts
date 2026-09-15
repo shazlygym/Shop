@@ -22,6 +22,26 @@ describe('renderConfirmation', () => {
     expect(out).toBe('Hi Sara {{unknown}}')
   })
 
+  it('inserts values containing replacement patterns literally', () => {
+    const out = renderConfirmation('{{customerName}}', {
+      orderNumber: '1',
+      customerName: '$&',
+      total: '1',
+      currency: 'EGP'
+    })
+    expect(out).toBe('$&')
+  })
+
+  it('does not re-substitute a value containing a later placeholder', () => {
+    const out = renderConfirmation('{{customerName}} {{total}}', {
+      orderNumber: '1',
+      customerName: '{{total}}',
+      total: '99',
+      currency: 'EGP'
+    })
+    expect(out).toBe('{{total}} 99')
+  })
+
   it('ships a default template containing the confirm instruction', () => {
     expect(DEFAULT_CONFIRMATION_TEMPLATE).toContain('1')
     expect(DEFAULT_CONFIRMATION_TEMPLATE).toContain('{{orderNumber}}')

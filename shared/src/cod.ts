@@ -1,8 +1,16 @@
-const COD_PATTERNS = ['cash on delivery', 'cashondelivery', 'cod', 'عند الاستلام', 'الدفع عند الاستلام', 'manual']
+const COD_TOKENS = new Set(['cod', 'manual'])
+const COD_PHRASES = ['cash on delivery', 'الدفع عند الاستلام', 'عند الاستلام']
 
 export function isCodOrder(gateways: string[]): boolean {
   return gateways.some((gateway) => {
-    const value = gateway.toLowerCase().trim()
-    return COD_PATTERNS.some((pattern) => value.includes(pattern))
+    const normalized = gateway
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\u0600-\u06FF]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (normalized.split(' ').some((token) => COD_TOKENS.has(token))) return true
+    return COD_PHRASES.some((phrase) => normalized.includes(phrase))
   })
 }

@@ -6,11 +6,10 @@ export interface ConfirmationVars {
 }
 
 export function renderConfirmation(template: string, vars: ConfirmationVars): string {
-  return template
-    .replaceAll('{{orderNumber}}', vars.orderNumber)
-    .replaceAll('{{customerName}}', vars.customerName)
-    .replaceAll('{{total}}', vars.total)
-    .replaceAll('{{currency}}', vars.currency)
+  return template.replace(
+    /\{\{(orderNumber|customerName|total|currency)\}\}/g,
+    (_match, key: string) => vars[key as keyof ConfirmationVars]
+  )
 }
 
 export const DEFAULT_CONFIRMATION_TEMPLATE = [

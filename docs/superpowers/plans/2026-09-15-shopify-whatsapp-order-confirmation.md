@@ -698,7 +698,7 @@ export function renderConfirmation(template: string, vars: ConfirmationVars): st
 }
 
 export const DEFAULT_CONFIRMATION_TEMPLATE = [
-  'مرحباً {{customerName}} 👋',
+  'مرحباً {{customerName}}',
   '',
   'طلبك رقم {{orderNumber}} بمبلغ {{total}} {{currency}}',
   'من فضلك أكد الطلب للاستمرار في التجهيز:',
