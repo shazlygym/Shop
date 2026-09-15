@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  shopifyOrderId  String        @unique
+  orderNumber     String
+  customerName    String
+  phone           String
+  total           String
+  currency        String
+  financialStatus String
+  paymentGateway  String
+  status          String        @default("pending")
+  sentAt          DateTime?
+  confirmedAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  jobs            MessageJob[]
+  messages        Message[]
+
+  @@index([status])
+  @@index([phone])
+}
+
+model MessageJob {
+  id          String   @id @default(cuid())
+  orderId     String
+  type        String   @default("confirmation")
+  status      String   @default("pending")
+  attempts    Int      @default(0)
+  lastError   String?
+  scheduledAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledAt])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  orderId     String
+  direction   String
+  body        String
+  waMessageId String?
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model WebhookEvent {
+  id               String   @id @default(cuid())
+  topic            String
+  shopifyOrderId   String
+  receivedAt       DateTime @default(now())
+
+  @@unique([topic, shopifyOrderId])
+}
+
+model Settings {
+  id                  Int      @id @default(1)
+  shopDomain          String   @default("")
+  adminAccessToken    String   @default("")
+  webhookSecret       String   @default("")
+  messageTemplate     String
+  interactiveButtons  Boolean  @default(true)
+  waStatus            String   @default("disconnected")
+  waQr                String?
+  waNumber            String?
+  waUpdatedAt         DateTime?
+  updatedAt           DateTime @updatedAt
+}
