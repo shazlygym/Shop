@@ -4,6 +4,8 @@ import { registerWebhookRoutes } from './routes/webhooks.js'
 import { registerOrderRoutes } from './routes/orders.js'
 import { registerStatsRoutes } from './routes/stats.js'
 import { registerSettingsRoutes } from './routes/settings.js'
+import { registerWhatsAppRoutes } from './routes/whatsapp.js'
+import { registerInternalRoutes } from './routes/internal.js'
 
 export function createApp(): Express {
   const app = express()
@@ -22,6 +24,8 @@ export function createApp(): Express {
   registerOrderRoutes(app)
   registerStatsRoutes(app)
   registerSettingsRoutes(app)
+  registerWhatsAppRoutes(app)
+  registerInternalRoutes(app)
 
   return app
 }
