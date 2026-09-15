@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client'
 import { normalizePhone, parseReply } from '@swc/shared'
 import type { ReplyIntent } from '@swc/shared'
+import { env } from './env.js'
 import type { InboundMessage } from './whatsapp/driver.js'
 
 interface Deps {
@@ -20,7 +21,7 @@ export async function handleInbound(
 ): Promise<'confirmed' | 'cancelled' | 'unknown' | 'ignored'> {
   const { prisma, notify, text } = deps
 
-  const phone = normalizePhone(text.from)
+  const phone = normalizePhone(text.from, env.defaultCountryCode)
   if (!phone) return 'ignored'
 
   const order = await prisma.order.findFirst({

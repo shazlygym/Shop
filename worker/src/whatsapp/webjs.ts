@@ -45,7 +45,7 @@ export function createWebjsDriver(): WhatsAppDriver {
   client.on('message', async (message) => {
     if (!inboundHandler) return
     const rawFrom = message.from.split('@')[0]
-    const phone = normalizePhone(rawFrom)
+    const phone = normalizePhone(rawFrom, env.defaultCountryCode)
     if (!phone) return
 
     let selectedButtonId: string | undefined
@@ -55,7 +55,7 @@ export function createWebjsDriver(): WhatsAppDriver {
     const resolved = await (message as unknown as { getContact?: () => Promise<{ number: string }> })
       .getContact?.()
       .catch(() => undefined)
-    const resolvedPhone = resolved?.number ? normalizePhone(resolved.number) : null
+    const resolvedPhone = resolved?.number ? normalizePhone(resolved.number, env.defaultCountryCode) : null
 
     inboundHandler({
       from: resolvedPhone ?? phone,
