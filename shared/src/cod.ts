@@ -1,4 +1,4 @@
-const COD_TOKENS = new Set(['cod', 'manual'])
+const COD_TOKENS = new Set(['cod', 'cashondelivery', 'manual'])
 const COD_PHRASES = ['cash on delivery', 'الدفع عند الاستلام', 'عند الاستلام']
 
 export function isCodOrder(gateways: string[]): boolean {

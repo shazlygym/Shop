@@ -4,6 +4,7 @@ import { isCodOrder } from './cod.js'
 describe('isCodOrder', () => {
   it('accepts cash on delivery variants', () => {
     expect(isCodOrder(['Cash on Delivery (COD)'])).toBe(true)
+    expect(isCodOrder(['cashondelivery'])).toBe(true)
     expect(isCodOrder(['cod'])).toBe(true)
     expect(isCodOrder(['الدفع عند الاستلام'])).toBe(true)
   })
