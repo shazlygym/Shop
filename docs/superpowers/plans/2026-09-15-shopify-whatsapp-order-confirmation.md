@@ -573,6 +573,8 @@ git add shared/src/hmac.ts shared/src/hmac.test.ts shared/src/index.ts
 git commit -m "feat(shared): add Shopify HMAC verification"
 ```
 
+**Amendment (2026-09-15):** Real Shopify sends the `X-Shopify-Hmac-Sha256` header as a base64 digest, not hex. `verifyShopifyHmac` must accept both base64 and hex digests using timing-safe comparison, returning false for an empty header and never throwing on a length mismatch. `computeShopifyHmacBase64` is exported alongside the existing hex `computeShopifyHmac`. The webhook route must use base64 when generating real Shopify signatures; test fixtures may keep using `computeShopifyHmac` (hex).
+
 ---
 
 ### Task 5: COD detection and message template
