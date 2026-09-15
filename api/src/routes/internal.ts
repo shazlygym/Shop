@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto'
 import type { Express } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { prisma as defaultPrisma } from '../db.js'
@@ -25,7 +26,11 @@ export function registerInternalRoutes(app: Express, deps: Deps = {}): void {
   const shopify = deps.shopifyClient ?? createShopifyClient()
 
   function authorized(header: string | undefined): boolean {
-    return Boolean(token) && header === token
+    if (!token || !header) return false
+    const provided = Buffer.from(header)
+    const expected = Buffer.from(token)
+    if (provided.length !== expected.length) return false
+    return timingSafeEqual(provided, expected)
   }
 
   app.post('/api/internal/whatsapp/status', async (req, res) => {

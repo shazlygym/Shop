@@ -31,7 +31,10 @@ export function registerWhatsAppRoutes(app: Express, deps: Deps = {}): void {
 
   app.post('/api/whatsapp/reconnect', async (_req, res) => {
     try {
-      const response = await doFetch(`${workerUrl}/internal/reconnect`, { method: 'POST' })
+      const response = await doFetch(`${workerUrl}/internal/reconnect`, {
+        method: 'POST',
+        headers: { 'x-internal-token': env.internalToken }
+      })
       res.json({ ok: response.ok })
     } catch (error) {
       res.status(502).json({ ok: false, error: error instanceof Error ? error.message : 'unreachable' })

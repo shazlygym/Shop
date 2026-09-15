@@ -4,6 +4,7 @@ import express from 'express'
 import request from 'supertest'
 import { PrismaClient } from '@prisma/client'
 import { createApp } from '../app.js'
+import { env } from '../env.js'
 import { registerWhatsAppRoutes } from './whatsapp.js'
 import { registerInternalRoutes } from './internal.js'
 
@@ -147,7 +148,10 @@ describe('whatsapp + internal routes', () => {
     const res = await request(buildInternalApp(fakeShopify(), fetchImpl)).post('/api/whatsapp/reconnect')
     expect(res.status).toBe(200)
     expect(res.body.ok).toBe(true)
-    expect(fetchImpl).toHaveBeenCalledWith('http://worker.test/internal/reconnect', { method: 'POST' })
+    expect(fetchImpl).toHaveBeenCalledWith('http://worker.test/internal/reconnect', {
+      method: 'POST',
+      headers: { 'x-internal-token': env.internalToken }
+    })
   })
 
   it('reports a 502 when the worker is unreachable', async () => {

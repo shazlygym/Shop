@@ -1,10 +1,19 @@
 import './load-env.js'
+import { timingSafeEqual } from 'node:crypto'
 import http from 'node:http'
 import { prisma } from './db.js'
 import { env } from './env.js'
 import { createNotifier } from './api-client.js'
 import { createBot } from './bot.js'
 import { createWebjsDriver } from './whatsapp/webjs.js'
+
+function authorized(header: string | undefined): boolean {
+  if (!env.internalToken || !header) return false
+  const provided = Buffer.from(header)
+  const expected = Buffer.from(env.internalToken)
+  if (provided.length !== expected.length) return false
+  return timingSafeEqual(provided, expected)
+}
 
 async function pushStatus(payload: { status: string; qr?: string | null; number?: string | null }): Promise<void> {
   await fetch(`${env.apiUrl}/api/internal/whatsapp/status`, {
@@ -26,6 +35,12 @@ async function main(): Promise<void> {
       return
     }
     if (req.method === 'POST' && req.url === '/internal/reconnect') {
+      const header = req.headers['x-internal-token']
+      if (!authorized(typeof header === 'string' ? header : undefined)) {
+        res.writeHead(401, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: 'unauthorized' }))
+        return
+      }
       void driver.requestReconnect().catch(() => undefined)
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ ok: true }))
