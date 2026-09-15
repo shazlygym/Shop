@@ -57,4 +57,49 @@ describe('orders routes', () => {
     const res = await request(createApp()).post('/api/orders/nope/resend')
     expect(res.status).toBe(404)
   })
+
+  it('returns the order messages oldest first', async () => {
+    const order = await prisma.order.findUnique({ where: { shopifyOrderId: '7770001' } })
+    await prisma.message.deleteMany({ where: { orderId: order!.id } })
+    await prisma.message.create({
+      data: {
+        orderId: order!.id,
+        direction: 'outbound',
+        body: 'second',
+        createdAt: new Date('2024-01-02T00:00:00.000Z')
+      }
+    })
+    await prisma.message.create({
+      data: {
+        orderId: order!.id,
+        direction: 'outbound',
+        body: 'first',
+        createdAt: new Date('2024-01-01T00:00:00.000Z')
+      }
+    })
+
+    const res = await request(createApp()).get(`/api/orders/${order!.id}/messages`)
+    expect(res.status).toBe(200)
+    expect(res.body.items.map((item: { body: string }) => item.body)).toEqual(['first', 'second'])
+  })
+
+  it('falls back to sane pagination for invalid query params', async () => {
+    const res = await request(createApp()).get('/api/orders?page=abc&pageSize=abc')
+    expect(res.status).toBe(200)
+    expect(res.body.page).toBe(1)
+    expect(res.body.pageSize).toBe(20)
+  })
+
+  it('does not create duplicate pending jobs when resending twice', async () => {
+    const order = await prisma.order.findUnique({ where: { shopifyOrderId: '7770001' } })
+    await prisma.messageJob.deleteMany({ where: { orderId: order!.id } })
+
+    const first = await request(createApp()).post(`/api/orders/${order!.id}/resend`)
+    const second = await request(createApp()).post(`/api/orders/${order!.id}/resend`)
+    expect(first.status).toBe(200)
+    expect(second.status).toBe(200)
+
+    const count = await prisma.messageJob.count({ where: { orderId: order!.id, status: 'pending' } })
+    expect(count).toBe(1)
+  })
 })
