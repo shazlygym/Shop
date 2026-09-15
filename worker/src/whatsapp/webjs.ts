@@ -16,6 +16,7 @@ export function createWebjsDriver(): WhatsAppDriver {
   mkdirSync(env.sessionPath, { recursive: true })
 
   let ready = false
+  let reconnecting = false
   let inboundHandler: ((message: InboundMessage) => void) | null = null
   let statusHandler: ((status: WaConnectionStatus, qr?: string | null, number?: string | null) => void) | null = null
 
@@ -43,7 +44,7 @@ export function createWebjsDriver(): WhatsAppDriver {
 
   client.on('message', async (message) => {
     if (!inboundHandler) return
-    const rawFrom = message.from.split('@')[0] ?? ''
+    const rawFrom = message.from.split('@')[0]
     const phone = normalizePhone(rawFrom)
     if (!phone) return
 
@@ -73,11 +74,11 @@ export function createWebjsDriver(): WhatsAppDriver {
   async function trySendButtons(to: string, message: OutboundMessage): Promise<{ waMessageId: string } | null> {
     try {
       const mod = (await import('whatsapp-web.js')) as unknown as { Buttons?: unknown }
-      const ButtonsCtor = mod.Buttons
-      if (typeof ButtonsCtor !== 'function') return null
+      const ButtonsClass = mod.Buttons
+      if (typeof ButtonsClass !== 'function') return null
       const chatId = `${to.replace('+', '')}@c.us`
       const buttons = (message.buttons ?? []).map((b) => ({ body: b.label, id: b.id }))
-      const interactive = new (ButtonsCtor as ButtonsCtor)(message.body, buttons, '', '')
+      const interactive = new (ButtonsClass as ButtonsCtor)(message.body, buttons, '', '')
       const sent = await client.sendMessage(chatId, interactive as never)
       return { waMessageId: sent.id?._serialized ?? '' }
     } catch {
@@ -116,9 +117,19 @@ export function createWebjsDriver(): WhatsAppDriver {
       return ready
     },
     async requestReconnect() {
+      if (reconnecting) return
+      reconnecting = true
       ready = false
-      await client.destroy()
-      await client.initialize()
+      statusHandler?.('connecting', null, null)
+      try {
+        await client.destroy()
+        await client.initialize()
+      } catch {
+        ready = false
+        statusHandler?.('disconnected', null, null)
+      } finally {
+        reconnecting = false
+      }
     }
   }
 }
