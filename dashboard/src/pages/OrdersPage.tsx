@@ -17,6 +17,7 @@ export function OrdersPage() {
   const [status, setStatus] = useState('')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
+  const [resendError, setResendError] = useState(false)
   const pageSize = 20
 
   const load = useCallback(async () => {
@@ -57,6 +58,12 @@ export function OrdersPage() {
         <span className="text-sm text-slate-500">{total} أوردر</span>
       </div>
 
+      {resendError && (
+        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          تعذر إعادة الإرسال
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-2xl bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="bg-slate-50 text-slate-600">
@@ -79,7 +86,10 @@ export function OrdersPage() {
                 <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => void api.resendOrder(order.id).then(load)}
+                    onClick={() => {
+                      setResendError(false)
+                      void api.resendOrder(order.id).then(load).catch(() => setResendError(true))
+                    }}
                     className="rounded-lg border px-3 py-1 text-xs hover:bg-slate-50"
                   >
                     إعادة إرسال
