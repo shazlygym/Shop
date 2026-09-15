@@ -1,3 +1,4 @@
+import './load-env.js'
 import http from 'node:http'
 import { prisma } from './db.js'
 import { env } from './env.js'

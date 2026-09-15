@@ -5,9 +5,11 @@
   "workspaces": ["shared", "api", "worker", "dashboard"],
   "engines": { "node": ">=20" },
   "scripts": {
+    "predev": "npm run build -w shared",
     "dev": "concurrently -n api,worker,dashboard -c blue,magenta,green \"npm:dev -w api\" \"npm:dev -w worker\" \"npm:dev -w dashboard\"",
     "build": "npm run build -w shared && npm run build -w api && npm run build -w worker && npm run build -w dashboard",
     "start": "npm run start -w api",
+    "pretest": "npm run build -w shared",
     "test": "npm run test -w shared && npm run test -w api && npm run test -w worker",
     "db:push": "npm run db:push -w api"
   },

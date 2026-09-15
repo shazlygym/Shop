@@ -9,7 +9,7 @@
     "start": "node -e \"const fs=require('fs');if(!fs.existsSync('../../dashboard/dist'))console.warn('[api] dashboard/dist missing - run npm run build -w dashboard')\" && node dist/index.js",
     "pretest": "DATABASE_URL=file:./test.db prisma db push --skip-generate",
     "test": "vitest run",
-    "db:push": "prisma db push",
+    "db:push": "DATABASE_URL=file:./dev.db prisma db push",
     "db:generate": "prisma generate"
   },
   "dependencies": {
