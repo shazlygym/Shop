@@ -174,3 +174,11 @@
 *.lz
 *.lzma
 *.iso
+
+# App
+.env
+node_modules/
+dist/
+*.db
+*.db-journal
+.wa-session/

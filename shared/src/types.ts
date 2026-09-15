@@ -1,0 +1,5 @@
+export type OrderStatus = 'pending' | 'sent' | 'confirmed' | 'cancelled' | 'failed'
+export type JobStatus = 'pending' | 'processing' | 'sent' | 'failed'
+export type MessageDirection = 'out' | 'in'
+export type ReplyIntent = 'confirm' | 'cancel' | 'unknown'
+export type WaConnectionStatus = 'connecting' | 'qr' | 'ready' | 'disconnected'
