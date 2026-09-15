@@ -13,7 +13,8 @@
   "dependencies": {
     "@prisma/client": "^5.14.0",
     "@swc/shared": "*",
-    "whatsapp-web.js": "^1.23.0"
+    "whatsapp-web.js": "^1.23.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
