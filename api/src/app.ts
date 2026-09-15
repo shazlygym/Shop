@@ -2,6 +2,7 @@ import express from 'express'
 import type { Express } from 'express'
 import { registerWebhookRoutes } from './routes/webhooks.js'
 import { registerOrderRoutes } from './routes/orders.js'
+import { registerStatsRoutes } from './routes/stats.js'
 
 export function createApp(): Express {
   const app = express()
@@ -18,6 +19,7 @@ export function createApp(): Express {
 
   registerWebhookRoutes(app)
   registerOrderRoutes(app)
+  registerStatsRoutes(app)
 
   return app
 }
