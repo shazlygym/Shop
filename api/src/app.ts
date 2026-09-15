@@ -4,10 +4,11 @@ import { registerWebhookRoutes } from './routes/webhooks.js'
 
 export function createApp(): Express {
   const app = express()
+  const jsonParser = express.json()
 
   app.use((req, res, next) => {
-    if (req.path.startsWith('/webhooks')) return next()
-    express.json()(req, res, next)
+    if (req.path.toLowerCase().startsWith('/webhooks')) return next()
+    jsonParser(req, res, next)
   })
 
   app.get('/health', (_req, res) => {

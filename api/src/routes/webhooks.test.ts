@@ -58,10 +58,32 @@ describe('shopify orders webhook', () => {
   })
 
   it('is idempotent for a repeated webhook', async () => {
-    await post(payload({ id: 5550002 }))
-    await post(payload({ id: 5550002 }))
+    const first = await post(payload({ id: 5550002 }))
+    expect(first.status).toBe(200)
+
+    const second = await post(payload({ id: 5550002 }))
+    expect(second.status).toBe(200)
+    expect(second.body).toEqual({ skipped: 'duplicate' })
+
     const count = await prisma.order.count({ where: { shopifyOrderId: '5550002' } })
     expect(count).toBe(1)
+
+    const order = await prisma.order.findUnique({ where: { shopifyOrderId: '5550002' } })
+    const jobs = await prisma.messageJob.count({ where: { orderId: order!.id } })
+    expect(jobs).toBe(1)
+  })
+
+  it('falls back to shipping_address phone when the top-level phone is empty', async () => {
+    const res = await post(payload({ id: 5550004, phone: '', shipping_address: { phone: '01098765432' } }))
+    expect(res.status).toBe(200)
+
+    const order = await prisma.order.findUnique({ where: { shopifyOrderId: '5550004' } })
+    expect(order).not.toBeNull()
+    expect(order?.phone).toBe('+201098765432')
+    expect(order?.status).toBe('pending')
+
+    const job = await prisma.messageJob.findFirst({ where: { orderId: order!.id } })
+    expect(job?.status).toBe('pending')
   })
 
   it('ignores non-COD orders', async () => {
