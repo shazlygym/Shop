@@ -1,6 +1,6 @@
 import { env } from '../env.js'
 
-const API_VERSION = '2024-07'
+const API_VERSION = '2026-07'
 
 interface ShopifyConfig {
   shopDomain?: string

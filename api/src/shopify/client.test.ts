@@ -11,7 +11,7 @@ describe('shopify client', () => {
     await client.addTags('123', ['confirmed-by-whatsapp'])
 
     const [url, init] = fetchImpl.mock.calls[0]
-    expect(String(url)).toContain('s.myshopify.com/admin/api/2024-07/graphql.json')
+    expect(String(url)).toContain('s.myshopify.com/admin/api/2026-07/graphql.json')
     const body = JSON.parse(String(init.body))
     expect(body.query).toContain('tagsAdd')
     expect(body.variables).toEqual({ id: 'gid://shopify/Order/123', tags: ['confirmed-by-whatsapp'] })

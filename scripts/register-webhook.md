@@ -9,7 +9,7 @@
 2. سجّل الـ webhook عبر Admin API:
 
 ```bash
-curl -X POST "https://<SHOP_DOMAIN>/admin/api/2024-07/graphql.json" \
+curl -X POST "https://<SHOP_DOMAIN>/admin/api/2026-07/graphql.json" \
   -H "Content-Type: application/json" \
   -H "X-Shopify-Access-Token: <ADMIN_TOKEN>" \
   -d '{"query":"mutation { webhookSubscriptionCreate(topic: ORDERS_CREATE, webhookSubscription: { callbackUrl: \"<PUBLIC_BASE_URL>/webhooks/shopify/orders\", format: JSON }) { userErrors { message } webhookSubscription { id } } }"}'
@@ -18,7 +18,7 @@ curl -X POST "https://<SHOP_DOMAIN>/admin/api/2024-07/graphql.json" \
 3. تحقق من الاشتراك:
 
 ```bash
-curl -X POST "https://<SHOP_DOMAIN>/admin/api/2024-07/graphql.json" \
+curl -X POST "https://<SHOP_DOMAIN>/admin/api/2026-07/graphql.json" \
   -H "Content-Type: application/json" \
   -H "X-Shopify-Access-Token: <ADMIN_TOKEN>" \
   -d '{"query":"{ webhookSubscriptions(first: 10) { edges { node { id topic endpoint { __typename ... on WebhookHttpEndpoint { callbackUrl } } } } } }"}'
