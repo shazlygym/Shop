@@ -4,6 +4,7 @@ import { api, type Settings } from '../api'
 export function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState(false)
 
   useEffect(() => {
     void api.getSettings().then(setSettings).catch(() => setSettings(null))
@@ -21,9 +22,14 @@ export function SettingsPage() {
   }
 
   async function save() {
-    const updated = await api.saveSettings(current)
-    setSettings(updated)
-    setSaved(true)
+    setSaveError(false)
+    try {
+      const updated = await api.saveSettings(current)
+      setSettings(updated)
+      setSaved(true)
+    } catch {
+      setSaveError(true)
+    }
   }
 
   return (
@@ -91,6 +97,7 @@ export function SettingsPage() {
           حفظ
         </button>
         {saved && <span className="text-sm text-emerald-600">تم الحفظ</span>}
+        {saveError && <span className="text-sm text-red-600">تعذر الحفظ</span>}
       </div>
     </div>
   )
