@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
+    "start": "node -e \"const fs=require('fs');if(!fs.existsSync('../../dashboard/dist'))console.warn('[api] dashboard/dist missing - run npm run build -w dashboard')\" && node dist/index.js",
     "pretest": "DATABASE_URL=file:./test.db prisma db push --skip-generate",
     "test": "vitest run",
     "db:push": "prisma db push",
