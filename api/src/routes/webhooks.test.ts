@@ -1,7 +1,7 @@
 import { beforeAll, afterAll, describe, expect, it } from 'vitest'
 import request from 'supertest'
 import { PrismaClient } from '@prisma/client'
-import { computeShopifyHmac } from '@swc/shared'
+import { computeShopifyHmac, computeShopifyHmacBase64 } from '@swc/shared'
 import { createApp } from '../app.js'
 
 const prisma = new PrismaClient()
@@ -90,6 +90,44 @@ describe('shopify orders webhook', () => {
     await post(payload({ id: 5550003, payment_gateway_names: ['shopify_payments'] }))
     const count = await prisma.order.count({ where: { shopifyOrderId: '5550003' } })
     expect(count).toBe(0)
+  })
+
+  it('accepts a base64 encoded signature like the real Shopify header', async () => {
+    const raw = JSON.stringify(payload({ id: 5550006 }))
+    const hmac = computeShopifyHmacBase64(raw, SECRET)
+    const res = await request(createApp())
+      .post('/webhooks/shopify/orders')
+      .set('Content-Type', 'application/json')
+      .set('x-shopify-hmac-sha256', hmac)
+      .send(raw)
+    expect(res.status).toBe(200)
+    const order = await prisma.order.findUnique({ where: { shopifyOrderId: '5550006' } })
+    expect(order).not.toBeNull()
+  })
+
+  it('stores a failed order with no job when no phone is available', async () => {
+    const res = await post(
+      payload({
+        id: 5550007,
+        phone: '',
+        customer: { first_name: 'No', last_name: 'Phone' },
+        shipping_address: { city: 'Cairo' }
+      })
+    )
+    expect(res.status).toBe(200)
+
+    const order = await prisma.order.findUnique({ where: { shopifyOrderId: '5550007' } })
+    expect(order).not.toBeNull()
+    expect(order?.phone).toBe('')
+    expect(order?.status).toBe('failed')
+
+    const jobs = await prisma.messageJob.count({ where: { orderId: order!.id } })
+    expect(jobs).toBe(0)
+
+    const event = await prisma.webhookEvent.findUnique({
+      where: { topic_shopifyOrderId: { topic: 'orders/create', shopifyOrderId: '5550007' } }
+    })
+    expect(event).not.toBeNull()
   })
 
   it('rejects a bad signature', async () => {

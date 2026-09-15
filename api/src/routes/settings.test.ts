@@ -38,6 +38,19 @@ describe('settings route', () => {
     expect(stored?.adminAccessToken).toBe('shpat_secret')
   })
 
+  it('stores a new webhook secret and masks it on the next read', async () => {
+    await request(createApp()).put('/api/settings').send({ webhookSecret: 'whsec_secret' })
+
+    const res = await request(createApp()).get('/api/settings')
+    expect(res.body.webhookSecret).toBe('********')
+  })
+
+  it('leaves the webhook secret unchanged when the masked value is submitted', async () => {
+    await request(createApp()).put('/api/settings').send({ webhookSecret: '********' })
+    const stored = await prisma.settings.findUnique({ where: { id: 1 } })
+    expect(stored?.webhookSecret).toBe('whsec_secret')
+  })
+
   it('updates the template and the buttons toggle', async () => {
     await request(createApp()).put('/api/settings').send({ messageTemplate: 'hi {{orderNumber}}', interactiveButtons: false })
     const stored = await prisma.settings.findUnique({ where: { id: 1 } })
