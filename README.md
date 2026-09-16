@@ -74,42 +74,79 @@ npm run start -w worker
 
 المنفذ 3001 يقدم اللوحة والـ API معاً. منفذ 3001 هو المنفذ الوحيد الذي يحتاج أن يكون متاحاً من الإنترنت حتى تصل webhooks شوبيفاي.
 
-## النشر على Render
+## النشر على Fly.io
 
-الملفات الجاهزة للنشر: `Dockerfile` و`.dockerignore` و`render.yaml` و`scripts/render-start.sh`.
+ملفات النشر: `Dockerfile` و`.dockerignore` و`fly.toml` و`scripts/docker-start.sh`.
 
-يتم تشغيل الـ api والـ worker معاً داخل خدمة واحدة (Docker Web Service)، مع قرص دائم
-على المسار `/data` يخزّن قاعدة SQLite وجلسة واتساب. سبب استخدام Docker أن مكتبة
-`whatsapp-web.js` تحتاج Chromium ومكتبات نظام لا يمكن تثبيتها على بيئة Node الأصلية في Render.
+يتم تشغيل الـ api والـ worker معاً داخل جهاز واحد، مع Fly Volume على المسار `/data`
+يخزّن قاعدة SQLite وجلسة واتساب. سبب استخدام Docker أن مكتبة `whatsapp-web.js`
+تحتاج Chromium ومكتبات نظام غير متوفرة في بيئات التشغيل المعزولة.
+
+### المتطلبات
+
+- حساب على Fly.io و`flyctl` مثبّت.
+- بطاقة دفع (الـ Volume والجهاز الدائم يتطلبان حساباً مدفوعاً).
 
 ### الخطوات
 
-1. ارفع المستودع إلى GitHub أو GitLab، ثم من Render اختر New ثم Blueprint وحدّد المستودع.
-2. سيقوم Render بقراءة `render.yaml` وإنشاء الخدمة والقرص. القرص يتطلب خطة مدفوعة.
-3. املأ المتغيرات السرية عند الطلب:
+1. تسجيل الدخول:
 
-| المتغير | القيمة |
-| --- | --- |
-| `USER_SHOPIFY_SHOP_DOMAIN` | دومين المتجر |
-| `USER_SHOPIFY_ADMIN_TOKEN` | توكن Admin API |
-| `USER_SHOPIFY_WEBHOOK_SECRET` | الـ API secret |
-| `USER_PUBLIC_BASE_URL` | `https://<service-name>.onrender.com` بعد أول نشر |
+```bash
+fly auth login
+```
 
-المتغيرات `DATABASE_URL` و`USER_WHATSAPP_SESSION_PATH` و`USER_DEFAULT_COUNTRY_CODE`
-و`USER_WORKER_PORT` و`PUPPETEER_EXECUTABLE_PATH` مضبوطة مسبقاً في `render.yaml`،
-والـ `USER_INTERNAL_TOKEN` يتم توليده تلقائياً.
+2. إنشاء التطبيق. غيّر `app` في `fly.toml` إن كان الاسم محجوزاً:
 
-4. بعد أول نشر انسخ رابط الخدمة من لوحة Render وضعه في `USER_PUBLIC_BASE_URL`.
-5. سجّل الـ webhook على الرابط العام: راجع `scripts/register-webhook.md`.
-6. افتح رابط الخدمة، ومن صفحة الاتصال امسح رمز QR بواتساب. الجلسة تُحفظ على القرص فلا تحتاج لمسحه مرة أخرى.
-7. أرسل أوردر تجريبي بالدفع عند الاستلام للتأكد من وصول الرسالة.
+```bash
+fly apps create shopify-wa-confirm
+```
+
+3. إنشاء الـ Volume في نفس المنطقة الموجودة في `fly.toml`:
+
+```bash
+fly volumes create app_data --region fra --size 1
+```
+
+4. ضبط المتغيرات السرية:
+
+```bash
+fly secrets set USER_SHOPIFY_SHOP_DOMAIN="your-store.myshopify.com" USER_SHOPIFY_ADMIN_TOKEN="shpat_xxx" USER_SHOPIFY_WEBHOOK_SECRET="xxx" USER_INTERNAL_TOKEN="$(openssl rand -hex 32)"
+```
+
+5. النشر:
+
+```bash
+fly deploy
+```
+
+6. تأكد أن جهازاً واحداً فقط يعمل، لأن رقم واتساب واحد يتحمل جلسة واحدة:
+
+```bash
+fly scale count 1
+```
+
+7. بعد نجاح النشر سيظهر رابط مثل `https://shopify-wa-confirm.fly.dev`. اضبطه كعنوان عام:
+
+```bash
+fly secrets set USER_PUBLIC_BASE_URL="https://shopify-wa-confirm.fly.dev"
+```
+
+8. افتح الرابط، ومن صفحة الاتصال امسح رمز QR بواتساب. الجلسة تُحفظ على الـ Volume.
+9. سجّل الـ webhook على الرابط العام: راجع `scripts/register-webhook.md`.
+10. أرسل أوردر تجريبي بالدفع عند الاستلام للتأكد من وصول الرسالة.
 
 ### ملاحظات التشغيل
 
-- الخطة الافتراضية في `render.yaml` هي `standard` لأن Chromium يحتاج ذاكرة كافية. الخطة `starter` قد تنفد ذاكرتها أثناء التشغيل.
-- المنفذ الوحيد المطلوب للإنترنت هو منفذ الخدمة؛ يعمل الـ worker على منفذ داخلي منفصل.
-- عند إعادة النشر تُحفظ قاعدة البيانات والجلسة على القرص، لذا لا تفقد البيانات.
-- عند أول تشغيل يتم إنشاء جداول قاعدة البيانات تلقائياً عبر `prisma db push` داخل سكربت البدء.
+- الجهاز يعمل باستمرار (`auto_stop_machines = false`) لأن واتساب يحتاج اتصالاً دائماً. إيقاف الجهاز يفصل الجلسة.
+- الذاكرة الافتراضية في `fly.toml` هي 1GB. لو ظهر خطأ نفاد ذاكرة بسبب Chromium، ارفعها إلى 2GB من قسم `[[vm]]`.
+- المنفذ العام الوحيد هو 3001؛ الـ worker يعمل على منفذ داخلي منفصل.
+- عند إعادة النشر تُحفظ قاعدة البيانات وجلسة واتساب على الـ Volume.
+- جداول قاعدة البيانات تُنشأ تلقائياً عند كل تشغيل عبر `prisma db push` داخل `scripts/docker-start.sh`.
+- لمراجعة السجلات:
+
+```bash
+fly logs
+```
 
 ## ملاحظات
 

@@ -30,4 +30,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends chromium ca-cer
 
 COPY --from=build /app /app
 
-CMD ["bash", "scripts/render-start.sh"]
+EXPOSE 3001
+
+CMD ["bash", "scripts/docker-start.sh"]
