@@ -1,39 +1,43 @@
-app = "shopify-wa-confirm"
-primary_region = "fra"
+# fly.toml app configuration file generated for shop-reec4g on 2026-09-16T23:32:21Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-kill_signal = "SIGTERM"
-kill_timeout = "30s"
+app = 'shop-reec4g'
+primary_region = 'fra'
+kill_signal = 'SIGTERM'
+kill_timeout = '30s'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  USER_API_PORT = "3001"
-  USER_WORKER_PORT = "3002"
-  USER_DEFAULT_COUNTRY_CODE = "20"
-  USER_WHATSAPP_SESSION_PATH = "/data/wa-session"
-  DATABASE_URL = "file:/data/dev.db"
-  PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
+  DATABASE_URL = 'file:/data/dev.db'
+  PUPPETEER_EXECUTABLE_PATH = '/usr/bin/chromium'
+  USER_API_PORT = '3001'
+  USER_DEFAULT_COUNTRY_CODE = '20'
+  USER_WHATSAPP_SESSION_PATH = '/data/wa-session'
+  USER_WORKER_PORT = '3002'
 
-[mounts]
-  source = "app_data"
-  destination = "/data"
+[[mounts]]
+  source = 'app_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 3001
   force_https = true
-  auto_stop_machines = false
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
 
   [[http_service.checks]]
-    interval = "15s"
-    timeout = "5s"
-    grace_period = "60s"
-    method = "GET"
-    path = "/health"
+    interval = '15s'
+    timeout = '5s'
+    grace_period = '1m0s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
-  cpu_kind = "shared"
+  cpu_kind = 'shared'
   cpus = 2
   memory_mb = 1024
