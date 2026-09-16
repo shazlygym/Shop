@@ -74,6 +74,43 @@ npm run start -w worker
 
 المنفذ 3001 يقدم اللوحة والـ API معاً. منفذ 3001 هو المنفذ الوحيد الذي يحتاج أن يكون متاحاً من الإنترنت حتى تصل webhooks شوبيفاي.
 
+## النشر على Render
+
+الملفات الجاهزة للنشر: `Dockerfile` و`.dockerignore` و`render.yaml` و`scripts/render-start.sh`.
+
+يتم تشغيل الـ api والـ worker معاً داخل خدمة واحدة (Docker Web Service)، مع قرص دائم
+على المسار `/data` يخزّن قاعدة SQLite وجلسة واتساب. سبب استخدام Docker أن مكتبة
+`whatsapp-web.js` تحتاج Chromium ومكتبات نظام لا يمكن تثبيتها على بيئة Node الأصلية في Render.
+
+### الخطوات
+
+1. ارفع المستودع إلى GitHub أو GitLab، ثم من Render اختر New ثم Blueprint وحدّد المستودع.
+2. سيقوم Render بقراءة `render.yaml` وإنشاء الخدمة والقرص. القرص يتطلب خطة مدفوعة.
+3. املأ المتغيرات السرية عند الطلب:
+
+| المتغير | القيمة |
+| --- | --- |
+| `USER_SHOPIFY_SHOP_DOMAIN` | دومين المتجر |
+| `USER_SHOPIFY_ADMIN_TOKEN` | توكن Admin API |
+| `USER_SHOPIFY_WEBHOOK_SECRET` | الـ API secret |
+| `USER_PUBLIC_BASE_URL` | `https://<service-name>.onrender.com` بعد أول نشر |
+
+المتغيرات `DATABASE_URL` و`USER_WHATSAPP_SESSION_PATH` و`USER_DEFAULT_COUNTRY_CODE`
+و`USER_WORKER_PORT` و`PUPPETEER_EXECUTABLE_PATH` مضبوطة مسبقاً في `render.yaml`،
+والـ `USER_INTERNAL_TOKEN` يتم توليده تلقائياً.
+
+4. بعد أول نشر انسخ رابط الخدمة من لوحة Render وضعه في `USER_PUBLIC_BASE_URL`.
+5. سجّل الـ webhook على الرابط العام: راجع `scripts/register-webhook.md`.
+6. افتح رابط الخدمة، ومن صفحة الاتصال امسح رمز QR بواتساب. الجلسة تُحفظ على القرص فلا تحتاج لمسحه مرة أخرى.
+7. أرسل أوردر تجريبي بالدفع عند الاستلام للتأكد من وصول الرسالة.
+
+### ملاحظات التشغيل
+
+- الخطة الافتراضية في `render.yaml` هي `standard` لأن Chromium يحتاج ذاكرة كافية. الخطة `starter` قد تنفد ذاكرتها أثناء التشغيل.
+- المنفذ الوحيد المطلوب للإنترنت هو منفذ الخدمة؛ يعمل الـ worker على منفذ داخلي منفصل.
+- عند إعادة النشر تُحفظ قاعدة البيانات والجلسة على القرص، لذا لا تفقد البيانات.
+- عند أول تشغيل يتم إنشاء جداول قاعدة البيانات تلقائياً عبر `prisma db push` داخل سكربت البدء.
+
 ## ملاحظات
 
 - مكتبة `whatsapp-web.js` غير رسمية، وقد يؤدي استخدامها إلى حظر رقم الواتساب. الاستخدام على مسؤوليتك.

@@ -1,16 +1,9 @@
 import { mkdirSync } from 'node:fs'
-import { Client, LocalAuth } from 'whatsapp-web.js'
+import WAWebJS from 'whatsapp-web.js'
 import { normalizePhone } from '@swc/shared'
 import type { WaConnectionStatus } from '@swc/shared'
 import { env } from '../env.js'
 import type { InboundMessage, OutboundMessage, WhatsAppDriver } from './driver.js'
-
-type ButtonsCtor = new (
-  body: string,
-  buttons: { body: string; id: string }[],
-  title: string,
-  footer: string
-) => unknown
 
 export function createWebjsDriver(): WhatsAppDriver {
   mkdirSync(env.sessionPath, { recursive: true })
@@ -20,8 +13,8 @@ export function createWebjsDriver(): WhatsAppDriver {
   let inboundHandler: ((message: InboundMessage) => void) | null = null
   let statusHandler: ((status: WaConnectionStatus, qr?: string | null, number?: string | null) => void) | null = null
 
-  const client = new Client({
-    authStrategy: new LocalAuth({ dataPath: env.sessionPath }),
+  const client = new WAWebJS.Client({
+    authStrategy: new WAWebJS.LocalAuth({ dataPath: env.sessionPath }),
     puppeteer: {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -73,12 +66,9 @@ export function createWebjsDriver(): WhatsAppDriver {
 
   async function trySendButtons(to: string, message: OutboundMessage): Promise<{ waMessageId: string } | null> {
     try {
-      const mod = (await import('whatsapp-web.js')) as unknown as { Buttons?: unknown }
-      const ButtonsClass = mod.Buttons
-      if (typeof ButtonsClass !== 'function') return null
       const chatId = `${to.replace('+', '')}@c.us`
       const buttons = (message.buttons ?? []).map((b) => ({ body: b.label, id: b.id }))
-      const interactive = new (ButtonsClass as ButtonsCtor)(message.body, buttons, '', '')
+      const interactive = new WAWebJS.Buttons(message.body, buttons, '', '')
       const sent = await client.sendMessage(chatId, interactive as never)
       return { waMessageId: sent.id?._serialized ?? '' }
     } catch {

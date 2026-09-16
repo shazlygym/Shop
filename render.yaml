@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: shopify-wa-confirm
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    region: frankfurt
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: app-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_URL
+        value: file:/data/dev.db
+      - key: USER_WHATSAPP_SESSION_PATH
+        value: /data/wa-session
+      - key: USER_DEFAULT_COUNTRY_CODE
+        value: "20"
+      - key: USER_WORKER_PORT
+        value: "3002"
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: /usr/bin/chromium
+      - key: USER_INTERNAL_TOKEN
+        generateValue: true
+      - key: USER_SHOPIFY_SHOP_DOMAIN
+        sync: false
+      - key: USER_SHOPIFY_ADMIN_TOKEN
+        sync: false
+      - key: USER_SHOPIFY_WEBHOOK_SECRET
+        sync: false
+      - key: USER_PUBLIC_BASE_URL
+        sync: false
